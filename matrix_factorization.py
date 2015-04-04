@@ -45,6 +45,7 @@ class KMeansClusterMachine(object):
         self.c = np.zeros(self.n)
         self.c_trace = []
         self.mu_trace = []
+        self.objective_trace = []
 
     def update_c(self):
         """
@@ -96,3 +97,12 @@ class KMeansClusterMachine(object):
         self.update_c()
         self.mu_trace.append(self.mu)
         self.update_mu()
+        self.objective_trace.append(
+            self.score_objective_fxn())
+
+    def score_objective_fxn(self):
+        score = 0.
+        for i in range(self.n):
+            score += np.linalg.norm(
+                self.data[i] - self.mu[self.c[i]])
+        return score
