@@ -1,6 +1,13 @@
 # mljams
 personal (if partial) implementations of major machine learning algos
 
+### multiclass classifiers
+
+* KNN - predict class by the nearest K observations,
+* multivariate gaussian Bayes classifier - learned via maximum likelihood estimation
+* softmax logistic regression classifiers - learned via gradient descent
+
+
 ### adaptive boosting
 train an ensemble of weak classifiers
 
