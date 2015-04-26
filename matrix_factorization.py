@@ -153,10 +153,11 @@ class CollaborativeFilteringFactorizer(object):
             self.observed_i_j[score[0]][score[1]] = score[2]
         self.rmse_trace = []
         self.log_likelihood_trace = []
+        self.univariate_constant = (1. / (np.sqrt(sigmasq)* np.sqrt(2. * np.pi)))
 
     def learn(self, iterations, test_set=None):
         v_j_prior = stats.multivariate_normal(
-            np.zeros(self.d), np.eye(self.d) * (1./self._lambda))
+            np.zeros(self.d), np.eye(self.d) * (1. / self._lambda))
         # initialize v_j with samples from prior
         self.v_j = {
             ix + 1: np.transpose(np.matrix(val))
@@ -235,19 +236,29 @@ class CollaborativeFilteringFactorizer(object):
 
     def log_likelihood(self, data=None):
         data = data or self.obs
-        data_term = np.product([
-            normal_pdf(
-                float(np.transpose(self.u_i[row[0]]) * self.v_j[row[1]]),
-                self.sigmasq,
-                [row[2]]
-            )
-            for row in data])
+        data_distances = np.array(self.predict_scores(data)) \
+            - np.array([x[-1] for x in data])
 
-        u_v_terms = normal_pdf(
-            np.zeros(self.d),
-            np.matrix(self._lambda * np.eye(self.d)),
-            self.u_i.values() + self.v_j.values())
-        return data_term * u_v_terms
+        return sum(map(np.log,
+            map(lambda d: self.univariate_pdf(d), data_distances)))
+
+    def predict_scores(self, data):
+        return [
+            float(np.transpose(self.u_i[row[0]]) * self.v_j[row[1]])
+            for row in data]
+
+    def univariate_pdf(self, distance):
+        return self.univariate_constant \
+            * np.exp(-1. * ((distance ** 2) / 2. * self.sigmasq))
+
+    def get_factor_matrices(self):
+        return (np.matrix(
+            [map(float, self.u_i[i])
+            for i in range(1, self.n1 + 1)
+              ]), np.matrix(
+            [map(float, self.v_j[j])
+            for j in range(1, self.n2 + 1)
+              ]))
 
 
 def _RMSE(error_vec):
